@@ -1,0 +1,53 @@
+@import "tailwindcss";
+
+@font-face {
+  font-family: "Grift";
+  src:
+    url("./assets/fonts/Grift-Medium.woff2") format("woff2"),
+    url("./assets/fonts/Grift-Medium.otf") format("opentype");
+  font-weight: 500;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Grift";
+  src:
+    url("./assets/fonts/Grift-Bold.woff2") format("woff2"),
+    url("./assets/fonts/Grift-Bold.otf") format("opentype");
+  font-weight: 700;
+  font-display: swap;
+}
+
+/* Gallegos: uso exclusivo na palavra "Apoie" do headline. Nunca em outro elemento de interface. */
+@font-face {
+  font-family: "Gallegos";
+  src:
+    url("./assets/fonts/Gallegos.woff2") format("woff2"),
+    url("./assets/fonts/Gallegos.otf") format("opentype");
+  font-display: swap;
+}
+
+@theme {
+  --color-azul: #1b2c7a;
+  --color-amarelo: #fbb914;
+  --color-bege: #fdf8f0;
+  --color-verde: #00a650;
+  --color-azul-claro: #1e88e5;
+  --font-grift: "Grift", system-ui, sans-serif;
+  --font-gallegos: "Gallegos", cursive;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  overscroll-behavior: none;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-grift);
+  background: var(--color-azul);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
