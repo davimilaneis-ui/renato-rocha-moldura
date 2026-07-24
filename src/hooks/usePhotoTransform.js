@@ -2,8 +2,7 @@ import { useCallback, useMemo, useRef, useState } from "react";
 
 export const ZOOM_MIN = 0.5;
 export const ZOOM_MAX = 3;
-export const ROTATION_MIN = -45;
-export const ROTATION_MAX = 45;
+export const ROTATION_STEP = 90;
 export const CANVAS_SIZE = 1080;
 
 function clamp(value, min, max) {
@@ -59,23 +58,16 @@ export function usePhotoTransform({ canvasRef, imageSize }) {
     [clampPan]
   );
 
-  const setRotation = useCallback(
-    (nextRotation) => {
-      setRotationState((prevRotation) => {
-        const rot = clamp(
-          typeof nextRotation === "function" ? nextRotation(prevRotation) : nextRotation,
-          ROTATION_MIN,
-          ROTATION_MAX
-        );
-        setZoomState((prevZoom) => {
-          setPan((prevPan) => clampPan(prevPan, prevZoom, rot));
-          return prevZoom;
-        });
-        return rot;
+  const rotateQuarterTurn = useCallback(() => {
+    setRotationState((prevRotation) => {
+      const rot = (prevRotation + ROTATION_STEP) % 360;
+      setZoomState((prevZoom) => {
+        setPan((prevPan) => clampPan(prevPan, prevZoom, rot));
+        return prevZoom;
       });
-    },
-    [clampPan]
-  );
+      return rot;
+    });
+  }, [clampPan]);
 
   const reset = useCallback(() => {
     setZoomState(1);
@@ -161,5 +153,5 @@ export function usePhotoTransform({ canvasRef, imageSize }) {
     onPointerLeave: endPointer,
   };
 
-  return { zoom, setZoom, rotation, setRotation, pan, reset, handlers, coverScale };
+  return { zoom, setZoom, rotation, rotateQuarterTurn, pan, reset, handlers, coverScale };
 }

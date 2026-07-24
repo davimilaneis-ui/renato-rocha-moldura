@@ -15,9 +15,32 @@ function triggerAnchorDownload(blob, filename) {
   setTimeout(() => URL.revokeObjectURL(url), 10_000);
 }
 
-// iOS Safari frequently ignores the `download` attribute and/or fails
-// silently on toBlob for large canvases. When that happens we fall back to
-// opening the image in a new tab so the user can long-press to save it.
+// All iOS browsers (Safari, Chrome, Firefox, ...) run on Apple's WebKit engine,
+// so the download-attribute/blob quirks are not Safari-specific — any browser
+// on iOS can hit them.
+function isIosDevice() {
+  const ua = navigator.userAgent;
+  return /iPad|iPhone|iPod/.test(ua) || (ua.includes("Macintosh") && navigator.maxTouchPoints > 1);
+}
+
+async function tryShare(blob, filename) {
+  if (!navigator.canShare || !navigator.share) return false;
+  try {
+    const file = new File([blob], filename, { type: "image/png" });
+    if (!navigator.canShare({ files: [file] })) return false;
+    await navigator.share({ files: [file] });
+    return true;
+  } catch (err) {
+    if (err?.name === "AbortError") throw err;
+    return false;
+  }
+}
+
+// iOS: canvas.toBlob + the `download` attribute is unreliable across every
+// WebKit-based browser. The Web Share API opens the native "Save Image" sheet
+// instead, which is far more familiar/reliable for users on iPhone. When
+// share isn't available we fall back to opening the image in a new tab so
+// the user can long-press to save it.
 export async function downloadCanvasAsPng(canvas, filename = "moldura-renato-rocha.png") {
   const blob = await canvasToBlob(canvas);
 
@@ -25,11 +48,16 @@ export async function downloadCanvasAsPng(canvas, filename = "moldura-renato-roc
     return { ok: false, fallbackUrl: canvas.toDataURL("image/png") };
   }
 
-  const ua = navigator.userAgent;
-  const isIos = /iPad|iPhone|iPod/.test(ua) || (ua.includes("Macintosh") && navigator.maxTouchPoints > 1);
-  const isSafari = /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS/.test(ua);
+  if (isIosDevice()) {
+    try {
+      const shared = await tryShare(blob, filename);
+      if (shared) return { ok: true };
+    } catch (err) {
+      if (err?.name === "AbortError") {
+        return { ok: false, cancelled: true };
+      }
+    }
 
-  if (isIos && isSafari) {
     const url = URL.createObjectURL(blob);
     return { ok: true, fallbackUrl: url, isFallback: true };
   }

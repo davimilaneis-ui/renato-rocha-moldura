@@ -19,7 +19,7 @@ export default function App() {
   const [fallbackUrl, setFallbackUrl] = useState(null);
   const [showPostDownload, setShowPostDownload] = useState(false);
 
-  const { zoom, setZoom, rotation, setRotation, pan, reset, handlers, coverScale } = usePhotoTransform({
+  const { zoom, setZoom, rotation, rotateQuarterTurn, pan, reset, handlers, coverScale } = usePhotoTransform({
     canvasRef,
     imageSize: photo,
   });
@@ -67,9 +67,13 @@ export default function App() {
     const canvas = canvasRef.current;
     if (!canvas) return;
     setError(null);
+    setFallbackUrl(null);
+    setShowPostDownload(false);
     const result = await downloadCanvasAsPng(canvas);
     if (!result.ok) {
-      setError("Não foi possível gerar o download. Tente novamente.");
+      if (!result.cancelled) {
+        setError("Não foi possível gerar o download. Tente novamente.");
+      }
       return;
     }
     if (result.isFallback) {
@@ -140,8 +144,7 @@ export default function App() {
             <Controls
               zoom={zoom}
               onZoomChange={setZoom}
-              rotation={rotation}
-              onRotationChange={setRotation}
+              onRotate={rotateQuarterTurn}
               onReset={reset}
               onDownload={handleDownload}
               onSwapPhoto={handleSwapPhoto}
