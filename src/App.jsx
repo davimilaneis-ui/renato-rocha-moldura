@@ -136,7 +136,7 @@ export default function App() {
 
           {showPostDownload && (
             <p className="max-w-xs text-center font-grift text-sm font-medium text-white">
-              Pronto! Compartilhe e marque @renatorocha
+              Pronto! Compartilhe e marque @renatorochabrasilia
             </p>
           )}
 

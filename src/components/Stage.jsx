@@ -71,7 +71,7 @@ export default function Stage({ canvasRef, photo, zoom, rotation, pan, coverScal
           className="pointer-events-none absolute flex flex-col items-center justify-center gap-2 text-center"
           style={{ top: "7%", bottom: "17%", left: "9%", right: "12%" }}
         >
-          <span className="rounded-lg bg-azul px-4 py-2 text-sm font-medium text-white">
+          <span className="rounded-lg bg-verde px-4 py-2 text-sm font-medium text-white">
             Clique aqui para anexar sua foto
           </span>
         </div>
