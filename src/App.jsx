@@ -19,7 +19,7 @@ export default function App() {
   const [fallbackUrl, setFallbackUrl] = useState(null);
   const [showPostDownload, setShowPostDownload] = useState(false);
 
-  const { zoom, setZoom, pan, reset, handlers, coverScale } = usePhotoTransform({
+  const { zoom, setZoom, rotation, setRotation, pan, reset, handlers, coverScale } = usePhotoTransform({
     canvasRef,
     imageSize: photo,
   });
@@ -102,6 +102,7 @@ export default function App() {
               canvasRef={canvasRef}
               photo={photo}
               zoom={zoom}
+              rotation={rotation}
               pan={pan}
               coverScale={coverScale}
               handlers={handlers}
@@ -114,14 +115,19 @@ export default function App() {
           {error && <p className="max-w-xs text-center font-grift text-sm text-red-300">{error}</p>}
 
           {fallbackUrl && (
-            <a
-              href={fallbackUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="max-w-xs rounded-lg border border-white/70 px-4 py-2 text-center font-grift text-sm font-medium text-white"
-            >
-              Abrir imagem para salvar — pressione e segure e escolha "Salvar imagem"
-            </a>
+            <div className="flex max-w-xs flex-col items-center gap-2">
+              <a
+                href={fallbackUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="w-full rounded-lg bg-azul-claro py-3 text-center font-grift text-sm font-bold text-white"
+              >
+                Toque aqui para abrir sua foto
+              </a>
+              <p className="text-center font-grift text-xs text-white/80">
+                Na nova aba, pressione e segure a imagem e escolha "Salvar imagem"
+              </p>
+            </div>
           )}
 
           {showPostDownload && (
@@ -134,6 +140,8 @@ export default function App() {
             <Controls
               zoom={zoom}
               onZoomChange={setZoom}
+              rotation={rotation}
+              onRotationChange={setRotation}
               onReset={reset}
               onDownload={handleDownload}
               onSwapPhoto={handleSwapPhoto}

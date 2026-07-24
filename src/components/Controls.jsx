@@ -1,6 +1,14 @@
-import { ZOOM_MAX, ZOOM_MIN } from "../hooks/usePhotoTransform";
+import { ROTATION_MAX, ROTATION_MIN, ZOOM_MAX, ZOOM_MIN } from "../hooks/usePhotoTransform";
 
-export default function Controls({ zoom, onZoomChange, onReset, onDownload, onSwapPhoto }) {
+export default function Controls({
+  zoom,
+  onZoomChange,
+  rotation,
+  onRotationChange,
+  onReset,
+  onDownload,
+  onSwapPhoto,
+}) {
   return (
     <div className="flex w-full max-w-[360px] flex-col gap-3 font-grift">
       <div className="flex items-center gap-3">
@@ -22,6 +30,23 @@ export default function Controls({ zoom, onZoomChange, onReset, onDownload, onSw
         >
           Centralizar
         </button>
+      </div>
+
+      <div className="flex items-center gap-3">
+        <span className="text-xs font-medium text-white">Girar</span>
+        <input
+          type="range"
+          min={ROTATION_MIN}
+          max={ROTATION_MAX}
+          step={0.5}
+          value={rotation}
+          onChange={(e) => onRotationChange(Number(e.target.value))}
+          className="h-2 flex-1 accent-azul-claro"
+          aria-label="Girar a foto"
+        />
+        <span className="w-10 shrink-0 text-right text-xs font-medium text-white/80">
+          {Math.round(rotation)}°
+        </span>
       </div>
 
       <button

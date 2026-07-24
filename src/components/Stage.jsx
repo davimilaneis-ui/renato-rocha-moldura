@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { CANVAS_SIZE } from "../hooks/usePhotoTransform";
 import { useMaskImage } from "../hooks/useMaskImage";
 
-export default function Stage({ canvasRef, photo, zoom, pan, coverScale, handlers, onFileDropped, onTapUpload }) {
+export default function Stage({ canvasRef, photo, zoom, rotation, pan, coverScale, handlers, onFileDropped, onTapUpload }) {
   const mask = useMaskImage();
   const [isDragOver, setIsDragOver] = useState(false);
   const rafRef = useRef(null);
@@ -24,7 +24,11 @@ export default function Stage({ canvasRef, photo, zoom, pan, coverScale, handler
         const drawnH = photo.height * scale;
         const cx = CANVAS_SIZE / 2 + pan.x;
         const cy = CANVAS_SIZE / 2 + pan.y;
-        ctx.drawImage(photo.bitmap, cx - drawnW / 2, cy - drawnH / 2, drawnW, drawnH);
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate((rotation * Math.PI) / 180);
+        ctx.drawImage(photo.bitmap, -drawnW / 2, -drawnH / 2, drawnW, drawnH);
+        ctx.restore();
       }
 
       if (mask) {
@@ -33,7 +37,7 @@ export default function Stage({ canvasRef, photo, zoom, pan, coverScale, handler
     });
 
     return () => cancelAnimationFrame(rafRef.current);
-  }, [canvasRef, photo, zoom, pan, coverScale, mask]);
+  }, [canvasRef, photo, zoom, rotation, pan, coverScale, mask]);
 
   function handleDrop(e) {
     e.preventDefault();

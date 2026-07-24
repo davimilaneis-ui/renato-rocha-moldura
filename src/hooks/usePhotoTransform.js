@@ -2,14 +2,25 @@ import { useCallback, useMemo, useRef, useState } from "react";
 
 export const ZOOM_MIN = 0.5;
 export const ZOOM_MAX = 3;
+export const ROTATION_MIN = -45;
+export const ROTATION_MAX = 45;
 export const CANVAS_SIZE = 1080;
 
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
 }
 
+// Axis-aligned bounding box of a w x h rectangle rotated by angleDeg around its center.
+function rotatedBBox(w, h, angleDeg) {
+  const rad = (angleDeg * Math.PI) / 180;
+  const cos = Math.abs(Math.cos(rad));
+  const sin = Math.abs(Math.sin(rad));
+  return { width: w * cos + h * sin, height: w * sin + h * cos };
+}
+
 export function usePhotoTransform({ canvasRef, imageSize }) {
   const [zoom, setZoomState] = useState(1);
+  const [rotation, setRotationState] = useState(0);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const pointers = useRef(new Map());
   const dragStart = useRef(null);
@@ -17,16 +28,18 @@ export function usePhotoTransform({ canvasRef, imageSize }) {
 
   const coverScale = useMemo(() => {
     if (!imageSize) return 1;
-    return Math.max(CANVAS_SIZE / imageSize.width, CANVAS_SIZE / imageSize.height);
-  }, [imageSize]);
+    const bbox = rotatedBBox(imageSize.width, imageSize.height, rotation);
+    return Math.max(CANVAS_SIZE / bbox.width, CANVAS_SIZE / bbox.height);
+  }, [imageSize, rotation]);
 
   const clampPan = useCallback(
-    (candidate, z) => {
+    (candidate, z, rot) => {
       if (!imageSize) return { x: 0, y: 0 };
-      const drawnW = imageSize.width * coverScale * z;
-      const drawnH = imageSize.height * coverScale * z;
-      const maxX = Math.max(0, (drawnW - CANVAS_SIZE) / 2);
-      const maxY = Math.max(0, (drawnH - CANVAS_SIZE) / 2);
+      const scaledW = imageSize.width * coverScale * z;
+      const scaledH = imageSize.height * coverScale * z;
+      const bbox = rotatedBBox(scaledW, scaledH, rot);
+      const maxX = Math.max(0, (bbox.width - CANVAS_SIZE) / 2);
+      const maxY = Math.max(0, (bbox.height - CANVAS_SIZE) / 2);
       return { x: clamp(candidate.x, -maxX, maxX), y: clamp(candidate.y, -maxY, maxY) };
     },
     [imageSize, coverScale]
@@ -36,8 +49,29 @@ export function usePhotoTransform({ canvasRef, imageSize }) {
     (nextZoom) => {
       setZoomState((prevZoom) => {
         const z = clamp(typeof nextZoom === "function" ? nextZoom(prevZoom) : nextZoom, ZOOM_MIN, ZOOM_MAX);
-        setPan((prevPan) => clampPan(prevPan, z));
+        setRotationState((prevRotation) => {
+          setPan((prevPan) => clampPan(prevPan, z, prevRotation));
+          return prevRotation;
+        });
         return z;
+      });
+    },
+    [clampPan]
+  );
+
+  const setRotation = useCallback(
+    (nextRotation) => {
+      setRotationState((prevRotation) => {
+        const rot = clamp(
+          typeof nextRotation === "function" ? nextRotation(prevRotation) : nextRotation,
+          ROTATION_MIN,
+          ROTATION_MAX
+        );
+        setZoomState((prevZoom) => {
+          setPan((prevPan) => clampPan(prevPan, prevZoom, rot));
+          return prevZoom;
+        });
+        return rot;
       });
     },
     [clampPan]
@@ -45,6 +79,7 @@ export function usePhotoTransform({ canvasRef, imageSize }) {
 
   const reset = useCallback(() => {
     setZoomState(1);
+    setRotationState(0);
     setPan({ x: 0, y: 0 });
   }, []);
 
@@ -99,10 +134,10 @@ export function usePhotoTransform({ canvasRef, imageSize }) {
           x: dragStart.current.panStart.x + dx,
           y: dragStart.current.panStart.y + dy,
         };
-        setPan(clampPan(candidate, zoom));
+        setPan(clampPan(candidate, zoom, rotation));
       }
     },
-    [clampPan, screenToCanvasRatio, setZoom, zoom]
+    [clampPan, screenToCanvasRatio, setZoom, zoom, rotation]
   );
 
   const endPointer = useCallback((e) => {
@@ -126,5 +161,5 @@ export function usePhotoTransform({ canvasRef, imageSize }) {
     onPointerLeave: endPointer,
   };
 
-  return { zoom, setZoom, pan, reset, handlers, coverScale };
+  return { zoom, setZoom, rotation, setRotation, pan, reset, handlers, coverScale };
 }
